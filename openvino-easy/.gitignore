@@ -1,0 +1,318 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# Log files
+*.log
+logs/
+log/
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+.env.staging
+secrets.json
+credentials.json
+
+# Model cache directories (OpenVINO-Easy specific)
+.cache/
+cache/
+model_cache/
+~/.cache/oe/
+~/.cache/openvino/
+~/.cache/huggingface/
+
+# OpenVINO model files (large binary files)
+*.xml
+*.bin
+*.onnx
+*.pb
+*.pbtxt
+*.caffemodel
+*.prototxt
+*.weights
+*.tflite
+*.mlmodel
+*.mlpackage
+
+# Model files (other formats)
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.keras
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Dataset files
+*.csv
+*.tsv
+*.json
+*.jsonl
+*.parquet
+*.feather
+*.arrow
+*.hdf
+*.nc
+*.netcdf
+
+# Media files (for testing/examples)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.tif
+*.webp
+*.svg
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.m4a
+*.aac
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+*.flv
+*.webm
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.rar
+*.7z
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation builds
+docs/_build/
+docs/build/
+site/
+
+# Performance profiling
+*.prof
+*.lprof
+
+# Memory dumps
+*.dump
+*.dmp
+
+# Core dumps
+core
+core.*
+
+# Repomix files (AI code analysis tool)
+repomix-output.txt
+.repomix/
+
+# Local development overrides
+local_settings.py
+local_config.py
+dev_settings.py
+
+# Docker overrides
+docker-compose.override.yml
+
+# CI/CD secrets
+.github/workflows/.env
+.gitlab-ci.yml.local
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Weights & Biases
+wandb/
+
+# TensorBoard
+runs/
+tensorboard_logs/
+
+# OpenVINO specific
+mo_logs/
+mo_output/
+nncf_logs/
+quantized_models/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Cython
+cython_debug/
+
+# PEP 582
+__pypackages__/
+
+# Poetry
+poetry.lock
+.pdm.toml
+
+# Pipenv
+Pipfile.lock
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
+
+# C extensions
+*.so
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Translations
+*.mo
+*.pot
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+
+# Flask
+instance/
+.webassets-cache
+
+# Scrapy
+.scrapy
+
+# PyBuilder
+.pybuilder/
+target/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db:encryptable
+ehthumbs_vista.db
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs* 

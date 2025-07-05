@@ -1,0 +1,229 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openvino-easy"
+version = "0.1.0"
+description = "Framework-agnostic Python wrapper for OpenVINO 2024"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "OpenVINO-Easy Contributors", email = "info@example.com"},
+]
+maintainers = [
+    {name = "OpenVINO-Easy Contributors", email = "info@example.com"},
+]
+keywords = ["openvino", "ai", "inference", "quantization", "optimization"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "huggingface-hub>=0.23.0",
+    "tqdm>=4.64.0",
+    "numpy>=1.21.0",
+]
+
+[project.optional-dependencies]
+# Basic CPU runtime (smallest install, ~40MB)
+cpu = [
+    "openvino>=2024.0.0,<2026.0.0",
+]
+
+# Alias for CPU runtime (keeps docs short)
+runtime = [
+    "openvino>=2024.0.0,<2026.0.0",
+]
+
+# Intel GPU support (includes OpenCL plugins)
+gpu = [
+    "openvino>=2024.0.0,<2026.0.0",
+]
+
+# Intel NPU support (includes NPU plugins)
+npu = [
+    "openvino>=2024.0.0,<2026.0.0", 
+]
+
+# INT8 quantization support
+quant = [
+    "openvino>=2024.0.0,<2026.0.0",
+    "nncf>=2.7.0,<2.8.0",  # Pin to avoid OpenVINO runtime mismatches
+]
+
+# Full development environment (Model Optimizer, NNCF, samples, ~1GB)
+full = [
+    "openvino-dev>=2024.0.0,<2026.0.0",
+    "nncf>=2.7.0,<2.8.0",
+]
+
+# Stable Diffusion support
+stable-diffusion = [
+    "diffusers>=0.21.0",
+    "transformers>=4.25.0",
+    "optimum[openvino]>=1.14.0",
+]
+
+# ONNX model support
+onnx = [
+    "onnx>=1.12.0",
+    "onnxruntime>=1.12.0",
+]
+
+# Text model support
+text = [
+    "transformers>=4.25.0",
+    "tokenizers>=0.13.0",
+]
+
+# Development tools
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=0.991",
+    "pre-commit>=2.20.0",
+]
+
+# Documentation
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=0.18.0",
+]
+
+# Everything (expand explicitly for better resolver compatibility)
+all = [
+    "openvino-dev>=2024.0.0,<2026.0.0",
+    "nncf>=2.7.0,<2.8.0",
+    "diffusers>=0.21.0",
+    "transformers>=4.25.0",
+    "optimum[openvino]>=1.14.0",
+    "onnx>=1.12.0",
+    "onnxruntime>=1.12.0",
+    "tokenizers>=0.13.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=0.991",
+    "pre-commit>=2.20.0",
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=0.18.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/openvino-easy"
+Documentation = "https://openvino-easy.readthedocs.io"
+Repository = "https://github.com/example/openvino-easy.git"
+"Bug Tracker" = "https://github.com/example/openvino-easy/issues"
+Changelog = "https://github.com/example/openvino-easy/blob/main/CHANGELOG.md"
+
+[project.scripts]
+oe = "oe.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["oe"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/oe",
+    "/tests",
+    "/docs",
+    "/examples",
+    "/README.md",
+    "/LICENSE",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+[tool.coverage.run]
+source = ["oe"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+] 

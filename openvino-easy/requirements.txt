@@ -1,0 +1,21 @@
+# OpenVINO-Easy Development Requirements
+# 
+# For development, install the package in editable mode with extras:
+# pip install -e ".[dev]"
+#
+# For production, use the specific hardware variant:
+# pip install "openvino-easy[cpu]"  # or [gpu], [npu], [quant], [full]
+#
+# This requirements.txt is mainly for Docker builds and legacy CI systems
+
+# Core package (editable install for development)
+-e .
+
+# Development dependencies (equivalent to [dev] extra)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=22.0.0
+isort>=5.10.0
+flake8>=5.0.0
+mypy>=0.991
+pre-commit>=2.20.0 

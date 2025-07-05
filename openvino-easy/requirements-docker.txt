@@ -1,0 +1,27 @@
+# Docker Requirements for OpenVINO-Easy
+# 
+# This file is optimized for Docker builds where you want to pre-install
+# dependencies before copying source code (for better layer caching)
+#
+# Usage in Dockerfile:
+# COPY requirements-docker.txt .
+# RUN pip install -r requirements-docker.txt
+# COPY . .
+# RUN pip install -e .
+
+# Base runtime (choose one based on your hardware)
+openvino>=2024.0.0,<2026.0.0
+
+# Core dependencies
+huggingface-hub>=0.16.0
+transformers>=4.25.0
+numpy>=1.21.0
+pillow>=8.3.0
+requests>=2.25.0
+
+# Optional: Add NNCF for quantization support
+# nncf>=2.7.0,<2.8.0
+
+# Optional: Add diffusers for Stable Diffusion
+# diffusers>=0.21.0
+# optimum[openvino]>=1.14.0 

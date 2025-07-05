@@ -1,0 +1,1 @@
+"""GitHub workflows package for OpenVINO-Easy.""" 
