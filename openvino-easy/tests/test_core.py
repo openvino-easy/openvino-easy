@@ -17,12 +17,10 @@ class TestCore:
         result = detect_device()
         assert result == "NPU"
     
-    @patch('oe._core.ov.Core')
-    def test_detect_device_npu_not_available(self, mock_core):
+    @patch('oe._core.get_available_devices')
+    def test_detect_device_npu_not_available(self, mock_get_devices):
         """Test device detection when NPU is not available."""
-        mock_core_instance = MagicMock()
-        mock_core_instance.available_devices = ["GPU", "CPU"]
-        mock_core.return_value = mock_core_instance
+        mock_get_devices.return_value = ["GPU", "CPU"]
         
         result = detect_device()
         assert result == "GPU"
@@ -37,12 +35,10 @@ class TestCore:
         result = detect_device()
         assert result == "CPU"
     
-    @patch('oe._core.ov.Core')
-    def test_detect_device_custom_preference(self, mock_core):
+    @patch('oe._core.get_available_devices')
+    def test_detect_device_custom_preference(self, mock_get_devices):
         """Test device detection with custom preference order."""
-        mock_core_instance = MagicMock()
-        mock_core_instance.available_devices = ["GPU", "CPU", "NPU"]
-        mock_core.return_value = mock_core_instance
+        mock_get_devices.return_value = ["GPU", "CPU", "NPU"]
         
         result = detect_device(("CPU", "GPU", "NPU"))
         assert result == "CPU"

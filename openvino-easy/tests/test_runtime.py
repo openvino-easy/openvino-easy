@@ -49,11 +49,137 @@ class TestRuntimeWrapper:
         input_info = self.wrapper.get_input_info()
         
         assert "input1" in input_info
-        assert "input2" in input_info
         assert input_info["input1"]["shape"] == [1, 3, 224, 224]
         assert input_info["input1"]["dtype"] == "f32"
+        
+        assert "input2" in input_info
         assert input_info["input2"]["shape"] == [1, 10]
         assert input_info["input2"]["dtype"] == "f32"
+    
+    def test_unload_method(self):
+        """Test that unload properly clears resources."""
+        # Verify model is initially loaded
+        assert self.wrapper.is_loaded()
+        
+        # Unload the model
+        self.wrapper.unload()
+        
+        # Verify model is no longer loaded
+        assert not self.wrapper.is_loaded()
+        assert self.wrapper.compiled_model is None
+        assert self.wrapper.infer_request is None
+        assert len(self.wrapper.input_info) == 0
+        assert len(self.wrapper.output_info) == 0
+        assert len(self.wrapper.model_info) == 0
+    
+    def test_inference_after_unload_raises_error(self):
+        """Test that inference after unload raises RuntimeError."""
+        # Unload the model
+        self.wrapper.unload()
+        
+        # Try to run inference - should raise RuntimeError
+        with pytest.raises(RuntimeError, match="Model has been unloaded"):
+            self.wrapper.infer("test input")
+    
+    @pytest.mark.asyncio
+    async def test_async_inference_after_unload_raises_error(self):
+        """Test that async inference after unload raises RuntimeError."""
+        # Unload the model
+        self.wrapper.unload()
+        
+        # Try to run async inference - should raise RuntimeError
+        with pytest.raises(RuntimeError, match="Model has been unloaded"):
+            await self.wrapper.infer_async("test input")
+    
+    def test_context_manager(self):
+        """Test context manager automatically unloads model."""
+        mock_compiled_model = MagicMock()
+        mock_compiled_model.inputs = [self.mock_input1]
+        mock_compiled_model.outputs = [self.mock_output1]
+        
+        # Use context manager
+        with RuntimeWrapper(mock_compiled_model, "NPU") as wrapper:
+            assert wrapper.is_loaded()
+            # Model should be loaded inside context
+        
+        # Model should be unloaded after exiting context
+        assert not wrapper.is_loaded()
+    
+    def test_context_manager_with_exception(self):
+        """Test context manager unloads model even when exception occurs."""
+        mock_compiled_model = MagicMock()
+        mock_compiled_model.inputs = [self.mock_input1]
+        mock_compiled_model.outputs = [self.mock_output1]
+        
+        # Use context manager with exception
+        with pytest.raises(ValueError):
+            with RuntimeWrapper(mock_compiled_model, "NPU") as wrapper:
+                assert wrapper.is_loaded()
+                raise ValueError("Test exception")
+        
+        # Model should still be unloaded after exception
+        assert not wrapper.is_loaded()
+    
+    def test_double_unload(self):
+        """Test that calling unload twice doesn't cause errors."""
+        # First unload
+        self.wrapper.unload()
+        assert not self.wrapper.is_loaded()
+        
+        # Second unload should not raise errors
+        self.wrapper.unload()
+        assert not self.wrapper.is_loaded()
+    
+    def test_is_loaded_method(self):
+        """Test is_loaded method accuracy."""
+        # Initially loaded
+        assert self.wrapper.is_loaded()
+        
+        # After unload
+        self.wrapper.unload()
+        assert not self.wrapper.is_loaded()
+    
+    def test_unload_clears_cache(self):
+        """Test that unload clears preprocessing cache."""
+        # Add some items to cache (simulate preprocessing)
+        with self.wrapper._cache_lock:
+            self.wrapper._preprocessing_cache["test_key"] = {"data": "test"}
+            self.wrapper._cache_hits = 5
+            self.wrapper._cache_attempts = 10
+        
+        # Verify cache has items
+        assert len(self.wrapper._preprocessing_cache) > 0
+        assert self.wrapper._cache_hits > 0
+        assert self.wrapper._cache_attempts > 0
+        
+        # Unload should clear cache
+        self.wrapper.unload()
+        
+        # Verify cache is cleared
+        assert len(self.wrapper._preprocessing_cache) == 0
+        assert self.wrapper._cache_hits == 0
+        assert self.wrapper._cache_attempts == 0
+    
+    def test_unload_clears_request_pool(self):
+        """Test that unload clears inference request pool."""
+        # Add mock requests to pool
+        mock_request1 = MagicMock()
+        mock_request2 = MagicMock()
+        
+        with self.wrapper._request_pool_lock:
+            self.wrapper.async_infer_requests = [mock_request1, mock_request2]
+            self.wrapper._available_requests = [mock_request1]
+        
+        # Verify pool has items
+        assert len(self.wrapper.async_infer_requests) == 2
+        assert len(self.wrapper._available_requests) == 1
+        
+        # Unload should clear pools
+        self.wrapper.unload()
+        
+        # Verify pools are cleared
+        assert len(self.wrapper.async_infer_requests) == 0
+        assert len(self.wrapper._available_requests) == 0
     
     def test_extract_output_info(self):
         """Test output information extraction."""
@@ -202,9 +328,12 @@ class TestRuntimeWrapper:
         output = np.array([[1.0, 2.0, 3.0]])  # Batch dimension of 1
         result = self.wrapper._format_single_output(output)
         
-        # Should remove batch dimension
+        # Should remove batch dimension and return as list
         assert isinstance(result, list)
-        assert result == [1.0, 2.0, 3.0]
+        assert len(result) == 3
+        # Values should be normalized (softmax applied)
+        assert all(0 <= x <= 1 for x in result)
+        assert abs(sum(result) - 1.0) < 1e-6  # Should sum to 1
     
     def test_postprocess_output_single(self):
         """Test postprocessing for single output."""
@@ -251,11 +380,12 @@ class TestRuntimeWrapper:
         
         with patch.object(self.wrapper, '_preprocess_input', return_value=mock_input):
             with patch.object(self.wrapper, '_postprocess_output', return_value=mock_output):
-                self.mock_compiled_model.return_value = mock_output
+                # Mock the infer request's infer method
+                self.wrapper.infer_request.infer = MagicMock(return_value=mock_output)
                 
                 result = self.wrapper.infer("test input")
                 
-                self.mock_compiled_model.assert_called_once_with(mock_input)
+                self.wrapper.infer_request.infer.assert_called_once_with(mock_input)
                 assert result == mock_output
     
     def test_get_model_info(self):

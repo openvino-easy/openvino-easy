@@ -2,6 +2,81 @@
 repomix-output.txt
 .repomix/
 
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PYTHONPATH
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# Model cache and data
+*.safetensors
+*.bin
+*.onnx
+*.xml
+*.mapping
+*.json
+models/
+cache/
+.cache/
+
+# OpenVINO specific
+*.blob
+*.mapping
+*.xml
+*.bin
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -28,4 +103,21 @@ Desktop.ini
 *.ipr
 *.iws
 *.sublime-project
-*.sublime-workspace 
+*.sublime-workspace
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Log files
+*.log
+logs/
+
+# OpenVINO-Easy specific
+# User model cache (unless you want to commit models)
+.openvino-easy/
+performance_baselines.json
+model_compatibility.json 

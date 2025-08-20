@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "openvino-easy"
-version = "0.1.0"
-description = "Framework-agnostic Python wrapper for OpenVINO 2024"
+version = "1.0.0"
+description = "Framework-agnostic Python wrapper for OpenVINO 2025"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
@@ -16,7 +16,7 @@ maintainers = [
 ]
 keywords = ["openvino", "ai", "inference", "quantization", "optimization"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
@@ -37,34 +37,35 @@ dependencies = [
 [project.optional-dependencies]
 # Basic CPU runtime (smallest install, ~40MB)
 cpu = [
-    "openvino>=2024.0.0,<2026.0.0",
+    "openvino>=2025.2.0,<2026.0.0",
 ]
 
 # Alias for CPU runtime (keeps docs short)
 runtime = [
-    "openvino>=2024.0.0,<2026.0.0",
+    "openvino>=2025.2.0,<2026.0.0",
 ]
 
 # Intel GPU support (includes OpenCL plugins)
 gpu = [
-    "openvino>=2024.0.0,<2026.0.0",
+    "openvino>=2025.2.0,<2026.0.0",
 ]
 
 # Intel NPU support (includes NPU plugins)
 npu = [
-    "openvino>=2024.0.0,<2026.0.0", 
+    "openvino>=2025.2.0,<2026.0.0", 
 ]
 
 # INT8 quantization support
 quant = [
-    "openvino>=2024.0.0,<2026.0.0",
-    "nncf>=2.7.0,<2.8.0",  # Pin to avoid OpenVINO runtime mismatches
+    "openvino>=2025.2.0,<2026.0.0",
+    "nncf>=2.15.0,<2.16.0",  # Updated for 2025.2 compatibility
 ]
 
-# Full development environment (Model Optimizer, NNCF, samples, ~1GB)
+# Full development environment (OpenVINO + NNCF + extras, ~1GB)
 full = [
-    "openvino-dev>=2024.0.0,<2026.0.0",
-    "nncf>=2.7.0,<2.8.0",
+    "openvino>=2025.2.0,<2026.0.0",
+    "nncf>=2.15.0,<2.16.0",
+    "optimum[openvino]>=1.14.0",  # For model conversion capabilities
 ]
 
 # Stable Diffusion support
@@ -86,6 +87,23 @@ text = [
     "tokenizers>=0.13.0",
 ]
 
+# Enhanced datasets support for better quantization
+datasets = [
+    "datasets>=2.10.0",
+    "pillow>=8.3.0",
+]
+
+# Audio model support (Whisper, TTS, etc.)
+audio = [
+    "librosa>=0.10.0",
+    "soundfile>=0.12.0",
+]
+
+# CLI enhancements
+cli = [
+    "colorama>=0.4.0",
+]
+
 # Development tools
 dev = [
     "pytest>=7.0.0",
@@ -95,6 +113,7 @@ dev = [
     "flake8>=5.0.0",
     "mypy>=0.991",
     "pre-commit>=2.20.0",
+    "colorama>=0.4.0",  # For enhanced CLI output
 ]
 
 # Documentation
@@ -106,14 +125,19 @@ docs = [
 
 # Everything (expand explicitly for better resolver compatibility)
 all = [
-    "openvino-dev>=2024.0.0,<2026.0.0",
-    "nncf>=2.7.0,<2.8.0",
+    "openvino>=2025.2.0,<2026.0.0",
+    "nncf>=2.15.0,<2.16.0",
     "diffusers>=0.21.0",
     "transformers>=4.25.0",
     "optimum[openvino]>=1.14.0",
     "onnx>=1.12.0",
     "onnxruntime>=1.12.0",
     "tokenizers>=0.13.0",
+    "datasets>=2.10.0",
+    "pillow>=8.3.0",
+    "librosa>=0.10.0",
+    "soundfile>=0.12.0",
+    "colorama>=0.4.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "black>=22.0.0",
@@ -204,6 +228,8 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end tests with real models",
+    "asyncio: marks tests as async tests",
 ]
 
 [tool.coverage.run]

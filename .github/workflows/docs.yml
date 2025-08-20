@@ -1,0 +1,378 @@
+name: Build and Deploy Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - 'openvino-easy/docs/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'openvino-easy/docs/**'
+
+# Allow manual triggering
+  workflow_dispatch:
+
+# Sets permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-docs-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-docs-
+            ${{ runner.os }}-pip-
+            
+      - name: Install documentation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install sphinx>=5.0.0 sphinx-rtd-theme>=1.0.0 myst-parser>=0.18.0
+          pip install furo  # Modern Sphinx theme alternative
+          
+      - name: Install project dependencies (for autodoc)
+        run: |
+          # Install minimal dependencies needed for API documentation
+          pip install numpy>=1.21.0 huggingface-hub>=0.23.0 tqdm>=4.64.0
+          # Install the project in development mode
+          pip install -e ./openvino-easy/
+          
+      - name: Create Sphinx configuration
+        run: |
+          cd openvino-easy/docs
+          cat > conf.py << 'EOF'
+          # Configuration file for the Sphinx documentation builder.
+          
+          import os
+          import sys
+          
+          # Add project root to path for autodoc
+          sys.path.insert(0, os.path.abspath('..'))
+          
+          # -- Project information -----------------------------------------------------
+          project = 'OpenVINO-Easy'
+          copyright = '2025, OpenVINO-Easy Contributors'
+          author = 'OpenVINO-Easy Contributors'
+          
+          # The full version, including alpha/beta/rc tags
+          release = '1.0.0'
+          version = '1.0.0'
+          
+          # -- General configuration ---------------------------------------------------
+          extensions = [
+              'sphinx.ext.autodoc',
+              'sphinx.ext.autosummary',
+              'sphinx.ext.viewcode',
+              'sphinx.ext.napoleon',
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.todo',
+              'myst_parser',
+          ]
+          
+          # Add any paths that contain templates here, relative to this directory.
+          templates_path = ['_templates']
+          
+          # List of patterns, relative to source directory, that match files and
+          # directories to ignore when looking for source files.
+          exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+          
+          # -- Options for HTML output -------------------------------------------------
+          html_theme = 'furo'
+          
+          html_theme_options = {
+              "sidebar_hide_name": False,
+              "light_logo": "logo-light.png",
+              "dark_logo": "logo-dark.png",
+              "source_repository": "https://github.com/your-org/openvino-easy/",
+              "source_branch": "main",
+              "source_directory": "openvino-easy/docs/",
+          }
+          
+          html_title = "OpenVINO-Easy Documentation"
+          html_short_title = "OpenVINO-Easy"
+          
+          # Add any paths that contain custom static files (such as style sheets) here,
+          # relative to this directory. They are copied after the builtin static files,
+          # so a file named "default.css" will overwrite the builtin "default.css".
+          html_static_path = ['_static']
+          
+          # Custom CSS
+          html_css_files = [
+              'custom.css',
+          ]
+          
+          # -- Extension configuration -------------------------------------------------
+          
+          # Napoleon settings
+          napoleon_google_docstring = True
+          napoleon_numpy_docstring = True
+          napoleon_include_init_with_doc = False
+          napoleon_include_private_with_doc = False
+          napoleon_include_special_with_doc = True
+          napoleon_use_admonition_for_examples = False
+          napoleon_use_admonition_for_notes = False
+          napoleon_use_admonition_for_references = False
+          napoleon_use_ivar = False
+          napoleon_use_param = True
+          napoleon_use_rtype = True
+          napoleon_preprocess_types = False
+          napoleon_type_aliases = None
+          napoleon_attr_annotations = True
+          
+          # Autodoc settings
+          autodoc_default_options = {
+              'members': True,
+              'member-order': 'bysource',
+              'special-members': '__init__',
+              'undoc-members': True,
+              'exclude-members': '__weakref__'
+          }
+          
+          # Intersphinx mapping
+          intersphinx_mapping = {
+              'python': ('https://docs.python.org/3/', None),
+              'numpy': ('https://numpy.org/doc/stable/', None),
+              'openvino': ('https://docs.openvino.ai/latest/', None),
+          }
+          
+          # MyST settings
+          myst_enable_extensions = [
+              "colon_fence",
+              "deflist",
+              "html_admonition",
+              "html_image",
+              "linkify",
+              "replacements",
+              "smartquotes",
+              "substitution",
+              "tasklist",
+          ]
+          
+          # Todo extension
+          todo_include_todos = True
+          
+          # -- Custom styling ----------------------------------------------------------
+          def setup(app):
+              app.add_css_file('custom.css')
+          EOF
+          
+      - name: Create custom CSS
+        run: |
+          cd openvino-easy/docs
+          mkdir -p _static
+          cat > _static/custom.css << 'EOF'
+          /* Custom styles for OpenVINO-Easy documentation */
+          
+          .wy-nav-content-wrap {
+              background: #fcfcfc;
+          }
+          
+          .wy-nav-content {
+              max-width: 1200px;
+          }
+          
+          /* Code blocks */
+          .highlight {
+              background: #f8f8f8;
+              border: 1px solid #e1e4e5;
+              border-radius: 4px;
+              margin: 1em 0;
+          }
+          
+          /* API documentation styling */
+          .py.class, .py.function, .py.method {
+              margin-bottom: 2em;
+          }
+          
+          /* Improved table styling */
+          .wy-table-responsive table td {
+              white-space: normal !important;
+          }
+          
+          /* Better code highlighting */
+          .highlight .hll { background-color: #ffffcc }
+          .highlight .c { color: #408080; font-style: italic }
+          .highlight .k { color: #008000; font-weight: bold }
+          .highlight .o { color: #666666 }
+          .highlight .ch { color: #408080; font-style: italic }
+          .highlight .cm { color: #408080; font-style: italic }
+          .highlight .cp { color: #BC7A00 }
+          .highlight .cpf { color: #408080; font-style: italic }
+          .highlight .c1 { color: #408080; font-style: italic }
+          .highlight .cs { color: #408080; font-style: italic }
+          .highlight .gd { color: #A00000 }
+          .highlight .ge { font-style: italic }
+          .highlight .gr { color: #FF0000 }
+          .highlight .gh { color: #000080; font-weight: bold }
+          .highlight .gi { color: #00A000 }
+          .highlight .go { color: #888888 }
+          .highlight .gp { color: #000080; font-weight: bold }
+          .highlight .gs { font-weight: bold }
+          .highlight .gu { color: #800080; font-weight: bold }
+          .highlight .gt { color: #0044DD }
+          .highlight .kc { color: #008000; font-weight: bold }
+          .highlight .kd { color: #008000; font-weight: bold }
+          .highlight .kn { color: #008000; font-weight: bold }
+          .highlight .kp { color: #008000 }
+          .highlight .kr { color: #008000; font-weight: bold }
+          .highlight .kt { color: #B00040 }
+          .highlight .m { color: #666666 }
+          .highlight .s { color: #BA2121 }
+          .highlight .na { color: #7D9029 }
+          .highlight .nb { color: #008000 }
+          .highlight .nc { color: #0000FF; font-weight: bold }
+          .highlight .no { color: #880000 }
+          .highlight .nd { color: #AA22FF }
+          .highlight .ni { color: #999999; font-weight: bold }
+          .highlight .ne { color: #D2413A; font-weight: bold }
+          .highlight .nf { color: #0000FF }
+          .highlight .nl { color: #A0A000 }
+          .highlight .nn { color: #0000FF; font-weight: bold }
+          .highlight .nt { color: #008000; font-weight: bold }
+          .highlight .nv { color: #19177C }
+          .highlight .ow { color: #AA22FF; font-weight: bold }
+          .highlight .w { color: #bbbbbb }
+          .highlight .mb { color: #666666 }
+          .highlight .mf { color: #666666 }
+          .highlight .mh { color: #666666 }
+          .highlight .mi { color: #666666 }
+          .highlight .mo { color: #666666 }
+          .highlight .sa { color: #BA2121 }
+          .highlight .sb { color: #BA2121 }
+          .highlight .sc { color: #BA2121 }
+          .highlight .dl { color: #BA2121 }
+          .highlight .sd { color: #BA2121; font-style: italic }
+          .highlight .s2 { color: #BA2121 }
+          .highlight .se { color: #BB6622; font-weight: bold }
+          .highlight .sh { color: #BA2121 }
+          .highlight .si { color: #BB6688; font-weight: bold }
+          .highlight .sx { color: #008000 }
+          .highlight .sr { color: #BB6688 }
+          .highlight .s1 { color: #BA2121 }
+          .highlight .ss { color: #19177C }
+          .highlight .bp { color: #008000 }
+          .highlight .fm { color: #0000FF }
+          .highlight .vc { color: #19177C }
+          .highlight .vg { color: #19177C }
+          .highlight .vi { color: #19177C }
+          .highlight .vm { color: #19177C }
+          .highlight .il { color: #666666 }
+          EOF
+          
+      - name: Build documentation
+        run: |
+          cd openvino-easy/docs
+          # Build the documentation
+          sphinx-build -b html -W --keep-going . _build/html
+          
+      - name: Create .nojekyll file
+        run: |
+          # Prevent GitHub Pages from treating underscored directories as Jekyll
+          touch openvino-easy/docs/_build/html/.nojekyll
+          
+      - name: Create CNAME file (optional - replace with your domain)
+        run: |
+          # Uncomment and modify if you have a custom domain
+          # echo "openvino-easy.yourdomain.com" > openvino-easy/docs/_build/html/CNAME
+          echo "# Custom domain placeholder" > openvino-easy/docs/_build/html/domain-placeholder.txt
+          
+      - name: Upload documentation artifacts
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: openvino-easy/docs/_build/html
+
+  # Deployment job (only runs on main branch)
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+        
+      - name: Comment deployment URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📖 Documentation preview deployed! View at: ${{ steps.deployment.outputs.page_url }}'
+            });
+
+  # Test build job for pull requests
+  test-build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install documentation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install sphinx>=5.0.0 sphinx-rtd-theme>=1.0.0 myst-parser>=0.18.0 furo
+          pip install numpy>=1.21.0 huggingface-hub>=0.23.0 tqdm>=4.64.0
+          
+      - name: Test documentation build
+        run: |
+          cd openvino-easy/docs
+          # Create minimal conf.py for testing
+          cat > conf.py << 'EOF'
+          project = 'OpenVINO-Easy'
+          extensions = ['myst_parser']
+          html_theme = 'furo'
+          exclude_patterns = ['_build']
+          EOF
+          
+          # Test build (allow warnings in PR builds)
+          sphinx-build -b html . _build/html
+          
+      - name: Comment on PR
+        uses: actions/github-script@v6
+        if: always()
+        with:
+          script: |
+            const status = '${{ job.status }}' === 'success' ? '✅ passed' : '❌ failed';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `📖 Documentation build test ${status}!\n\nThe documentation will be automatically deployed when this PR is merged to main.`
+            });

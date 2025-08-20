@@ -8,7 +8,6 @@ from unittest.mock import patch, MagicMock
 from pathlib import Path
 from oe.benchmark import (
     benchmark_model, 
-    benchmark_pipeline, 
     _generate_dummy_input, 
     _calculate_percentiles,
     save_benchmark_results,
@@ -65,8 +64,8 @@ def test_calculate_percentiles():
     
     # Check that p50 is median
     assert percentiles["p50_ms"] == 5.5
-    # Check that p90 is 9th value
-    assert percentiles["p90_ms"] == 9.0
+    # Check that p90 is approximately 9.1 (numpy percentile interpolation)
+    assert abs(percentiles["p90_ms"] - 9.1) < 0.1
 
 @patch('oe.benchmark._generate_dummy_input')
 @patch('oe.benchmark.time.perf_counter_ns')
@@ -80,13 +79,13 @@ def test_benchmark_model(mock_time, mock_generate_input):
     mock_input_data = {"input": np.random.randn(1, 3, 224, 224).astype(np.float32)}
     mock_generate_input.return_value = mock_input_data
     
-    # Mock timing (5 runs with different times)
-    mock_time.side_effect = [1000000, 2000000, 1000000, 3000000, 1000000]  # 1, 2, 1, 3, 1 ms
+    # Mock timing (need start and end times for each run: 2 calls per run * 5 runs = 10 calls)
+    mock_time.side_effect = [0, 1000000, 0, 2000000, 0, 1000000, 0, 3000000, 0, 1000000]  # pairs: (start, end)
     
     results = benchmark_model(mock_model, warmup_runs=0, benchmark_runs=5, device_name="CPU")
     
-    # Check that model was called correct number of times
-    assert mock_model.call_count == 5
+    # Check that infer request was created and called
+    assert mock_model.create_infer_request.call_count == 1
     
     # Check results structure
     assert "device" in results
@@ -100,30 +99,7 @@ def test_benchmark_model(mock_time, mock_generate_input):
     assert results["benchmark_runs"] == 5
     assert results["batch_size"] == 1
 
-@patch('oe.benchmark.benchmark_model')
-def test_benchmark_pipeline(mock_benchmark_model):
-    """Test pipeline benchmarking."""
-    # Mock pipeline
-    mock_pipeline = MagicMock()
-    mock_pipeline.compiled_model = MagicMock()
-    mock_pipeline.device = "NPU"
-    
-    # Mock benchmark results
-    mock_results = {"device": "NPU", "mean_ms": 5.0, "fps": 200.0}
-    mock_benchmark_model.return_value = mock_results
-    
-    results = benchmark_pipeline(mock_pipeline, warmup_runs=3, benchmark_runs=10)
-    
-    # Check that benchmark_model was called with correct parameters
-    mock_benchmark_model.assert_called_once_with(
-        mock_pipeline.compiled_model,
-        warmup_runs=3,
-        benchmark_runs=10,
-        batch_size=1,
-        device_name="NPU"
-    )
-    
-    assert results == mock_results
+# Note: benchmark_pipeline function removed in favor of stateful oe.benchmark()
 
 def test_save_and_load_benchmark_results():
     """Test saving and loading benchmark results."""
