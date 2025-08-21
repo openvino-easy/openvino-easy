@@ -949,15 +949,15 @@ def model_benchmark(args):
 
             # Summary
             summary = results["summary"]
-            if summary["fastest_model"]:
+            if summary.get("fastest_model"):
                 print_success(
                     f"Fastest: {summary['fastest_model']['id']} ({summary['fastest_model']['fps']:.1f} FPS on {summary['fastest_model']['device']})"
                 )
-            if summary["slowest_model"]:
+            if summary.get("slowest_model"):
                 print_info(
                     f"Slowest: {summary['slowest_model']['id']} ({summary['slowest_model']['fps']:.1f} FPS on {summary['slowest_model']['device']})"
                 )
-            print_info(f"Average performance: {summary['average_fps']} FPS")
+            print_info(f"Average performance: {summary.get('average_fps', 0)} FPS")
 
             # Individual results
             print("\nDetailed results:")
@@ -966,7 +966,9 @@ def model_benchmark(args):
                     print_error(f"{result['model_name']}: {result['error']}")
                 else:
                     bench = result["benchmark"]
-                    print(f"  {result['model_id']} ({result['dtype']})")
+                    model_id = result.get('model_id', 'unknown')
+                    dtype = result.get('dtype', 'unknown')
+                    print(f"  {model_id} ({dtype})")
                     print(
                         f"    Device: {bench.get('device', 'unknown')} | FPS: {bench.get('fps', 0):.1f} | Latency: {bench.get('mean_ms', 0):.1f}ms"
                     )

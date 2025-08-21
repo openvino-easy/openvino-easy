@@ -70,7 +70,7 @@ def test_calculate_percentiles():
 
 
 @patch("oe.benchmark._generate_dummy_input")
-@patch("oe.benchmark.time.perf_counter_ns")
+@patch("time.perf_counter_ns")
 def test_benchmark_model(mock_time, mock_generate_input):
     """Test model benchmarking."""
     # Mock compiled model
@@ -193,7 +193,7 @@ def test_compare_benchmarks_single():
 
 
 @patch("oe.benchmark._generate_dummy_input")
-@patch("oe.benchmark.time.perf_counter_ns")
+@patch("time.perf_counter_ns")
 def test_benchmark_model_fps_calculation(mock_time, mock_generate_input):
     """Test FPS calculation in benchmarking."""
     mock_model = MagicMock()
@@ -213,7 +213,7 @@ def test_benchmark_model_fps_calculation(mock_time, mock_generate_input):
 
 
 @patch("oe.benchmark._generate_dummy_input")
-@patch("oe.benchmark.time.perf_counter_ns")
+@patch("time.perf_counter_ns")
 def test_benchmark_model_zero_latency(mock_time, mock_generate_input):
     """Test FPS calculation with zero latency."""
     mock_model = MagicMock()

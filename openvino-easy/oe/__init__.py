@@ -83,7 +83,7 @@ def _validate_cache_path(original_path: str) -> None:
         # Check original path string for dangerous patterns before resolution
         dangerous_patterns = ["..", "~/", "${", "`", "%", "$("]
         for pattern in dangerous_patterns:
-            if pattern in original_path:
+            if pattern in str(original_path):
                 raise ValueError(
                     f"Unsafe path pattern '{pattern}' detected in: {original_path}"
                 )
@@ -686,8 +686,7 @@ class _ModelsNamespace:
         except Exception as e:
             raise RuntimeError(f"Model search failed: {e}")
 
-    @staticmethod
-    def info(model_id: str, cache_dir: Optional[str] = None) -> Dict[str, Any]:
+    def info(self, model_id: str, cache_dir: Optional[str] = None) -> Dict[str, Any]:
         """Get detailed information about a model (local or remote).
 
         Args:
@@ -712,7 +711,7 @@ class _ModelsNamespace:
         }
 
         # Check if model exists locally
-        local_models = _ModelsNamespace.list(cache_dir)
+        local_models = self.list(cache_dir)
         for local_model in local_models:
             if model_id in local_model["name"]:
                 info["local"] = True
@@ -755,8 +754,8 @@ class _ModelsNamespace:
 
         return info
 
-    @staticmethod
     def install(
+        self,
         model_id: str,
         dtype: str = "fp16",
         cache_dir: Optional[str] = None,
@@ -775,9 +774,11 @@ class _ModelsNamespace:
         """
         # Check if already installed
         if not force:
-            local_models = _ModelsNamespace.list(cache_dir)
+            local_models = self.list(cache_dir)
             for model in local_models:
-                if model_id in model["name"] and dtype in model["name"]:
+                # Convert model_id format (test/model -> test--model)
+                normalized_model_id = model_id.replace("/", "--")
+                if normalized_model_id in model["name"] and dtype in model["name"]:
                     return {
                         "installed": False,
                         "already_exists": True,
@@ -794,7 +795,7 @@ class _ModelsNamespace:
             model = load_model(model_id, dtype, str(models_dir))
 
             # Get size of installed model
-            installed_models = _ModelsNamespace.list(cache_dir)
+            installed_models = self.list(cache_dir)
             for installed_model in installed_models:
                 if (
                     model_id in installed_model["name"]
@@ -826,9 +827,8 @@ class _ModelsNamespace:
                 "message": f"Failed to install '{model_id}': {e}",
             }
 
-    @staticmethod
     def validate(
-        model_name: str = None, cache_dir: Optional[str] = None
+        self, model_name: str = None, cache_dir: Optional[str] = None
     ) -> Dict[str, Any]:
         """Validate model integrity and compatibility.
 
@@ -841,7 +841,7 @@ class _ModelsNamespace:
         """
         results = {"validated": 0, "passed": 0, "failed": 0, "models": []}
 
-        models_to_check = _ModelsNamespace.list(cache_dir)
+        models_to_check = self.list(cache_dir)
         if model_name:
             models_to_check = [m for m in models_to_check if model_name in m["name"]]
 
@@ -903,9 +903,8 @@ class _ModelsNamespace:
 
         return results
 
-    @staticmethod
     def benchmark_all(
-        cache_dir: Optional[str] = None, warmup: int = 3, runs: int = 10
+        self, cache_dir: Optional[str] = None, warmup: int = 3, runs: int = 10
     ) -> Dict[str, Any]:
         """Benchmark all installed models.
 
@@ -917,10 +916,10 @@ class _ModelsNamespace:
         Returns:
             Benchmark results for all models
         """
-        models = _ModelsNamespace.list(cache_dir)
+        models_list = self.list(cache_dir)
 
         results = {
-            "total_models": len(models),
+            "total_models": len(models_list),
             "benchmarked": 0,
             "failed": 0,
             "results": [],
@@ -931,7 +930,7 @@ class _ModelsNamespace:
         fastest_fps = 0
         slowest_fps = float("inf")
 
-        for model in models:
+        for model in models_list:
             try:
                 # Extract model info from directory name
                 name_parts = model["name"].split("--")

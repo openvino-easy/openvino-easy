@@ -135,14 +135,17 @@ class TestModelInstall:
             mock_get_dir.return_value = Path(temp_dir)
             mock_load_model.return_value = Mock()  # Mock OV model
 
-            # Mock the models.list to show the installed model
+            # Mock the models.list to be empty initially, then show the installed model
             with patch.object(oe.models, "list") as mock_list:
-                mock_list.return_value = [
-                    {
-                        "name": "test--model--fp16--hash123",
-                        "size_mb": 150.0,
-                        "files": ["model.xml", "model.bin"],
-                    }
+                mock_list.side_effect = [
+                    [],  # First call: no models installed initially
+                    [    # Second call: model appears after installation
+                        {
+                            "name": "test--model--fp16--hash123",
+                            "size_mb": 150.0,
+                            "files": ["model.xml", "model.bin"],
+                        }
+                    ]
                 ]
 
                 result = oe.models.install("test/model", dtype="fp16")

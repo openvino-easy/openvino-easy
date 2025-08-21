@@ -244,7 +244,7 @@ class TestCLIModelInstall:
         )
 
         captured = capsys.readouterr()
-        assert "[OK] Successfully installed test/model" in captured.out
+        assert "Successfully installed test/model" in captured.out
         assert "Size: 200.5 MB" in captured.out
         assert "Files: 15" in captured.out
 
@@ -269,7 +269,7 @@ class TestCLIModelInstall:
         model_install(args)
 
         captured = capsys.readouterr()
-        assert "[WARNING] Model already installed" in captured.out
+        assert "Model already installed" in captured.out
         assert "Use --force to reinstall" in captured.out
 
     @patch("oe.models.install")
@@ -328,12 +328,12 @@ class TestCLIModelValidate:
 
         captured = capsys.readouterr()
         assert "Validation Results (3 models checked)" in captured.out
-        assert "[OK] model1: Valid" in captured.out
-        assert "[OK] model2: Valid" in captured.out
-        assert "[ERROR] model3: Invalid" in captured.out
+        assert "model1: Valid" in captured.out
+        assert "model2: Valid" in captured.out
+        assert "model3: Invalid" in captured.out
         assert "Error: Missing XML file" in captured.out
         assert "Error: Corrupted data" in captured.out
-        assert "[WARNING]     Warning: Minor warning" in captured.out
+        assert "Warning: Minor warning" in captured.out
         assert "Summary: 2 passed, 1 failed" in captured.out
         assert "Some models failed validation" in captured.out
 
@@ -455,7 +455,7 @@ class TestCLIModelBenchmark:
 
         captured = capsys.readouterr()
         assert "Benchmark Results (1/2 models)" in captured.out
-        assert "[ERROR] test--bad--model: Failed to load model" in captured.out
+        assert "test--bad--model: Failed to load model" in captured.out
 
     @patch("oe.models.benchmark_all")
     def test_benchmark_no_models(self, mock_benchmark, capsys):

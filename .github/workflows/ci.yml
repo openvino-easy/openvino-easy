@@ -26,7 +26,7 @@ jobs:
         python -m pip install --upgrade pip
         cd openvino-easy
         pip install -e .[cpu]
-        pip install pytest pytest-cov ruff mypy
+        pip install pytest pytest-cov pytest-asyncio ruff mypy psutil
     
     - name: Run tests
       run: |
@@ -81,7 +81,7 @@ jobs:
         python -m pip install --upgrade pip
         cd openvino-easy
         pip install -e .[cpu]
-        pip install pytest pytest-cov ruff mypy
+        pip install pytest pytest-cov pytest-asyncio ruff mypy psutil
         pip install mypy
     
     - name: Type check

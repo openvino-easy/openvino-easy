@@ -148,7 +148,7 @@ class TestPerformanceRegression:
                 np.random.randn(64, 3, 3, 3).astype(np.float32)
             )
             conv = ov.opset11.convolution(
-                input_node, weight, strides=[1, 1], pads_begin=[1, 1], pads_end=[1, 1]
+                input_node, weight, strides=[1, 1], pads_begin=[1, 1], pads_end=[1, 1], dilations=[1, 1]
             )
             output = ov.opset11.relu(conv)
 
@@ -166,7 +166,7 @@ class TestPerformanceRegression:
             # Simple 1D convolution
             weight = ov.opset11.constant(np.random.randn(32, 1, 256).astype(np.float32))
             conv = ov.opset11.convolution(
-                reshaped, weight, strides=[128], pads_begin=[128], pads_end=[128]
+                reshaped, weight, strides=[128], pads_begin=[128], pads_end=[128], dilations=[1]
             )
             output = ov.opset11.relu(conv)
 
