@@ -1,75 +1,39 @@
 """OpenVINO-Easy: Framework-agnostic Python wrapper for OpenVINO 2025."""
 
-# Runtime guard - check OpenVINO availability immediately
+# Lazy OpenVINO availability check so `import oe` works without OpenVINO
 try:
-    import openvino as ov
-except ImportError:
-    # Dynamic installation hints based on available extras
-    _INSTALL_VARIANTS = {
-        "cpu": "CPU-only (40MB)",
-        "runtime": "CPU runtime (40MB)",
-        "gpu": "Intel GPU support",
-        "npu": "Intel NPU support",
-        "quant": "With INT8 quantization",
-        "full": "Full dev environment (~1GB)",
-    }
+    import openvino as ov  # type: ignore
+    _OV_AVAILABLE = True
+except Exception:
+    ov = None  # type: ignore
+    _OV_AVAILABLE = False
 
-    install_hints = []
-    for variant, desc in _INSTALL_VARIANTS.items():
-        install_hints.append(f"  • {desc}: pip install 'openvino-easy[{variant}]'")
-
-    raise ImportError(
-        "OpenVINO runtime not found. Install OpenVINO-Easy with hardware-specific extras:\n"
-        + "\n".join(install_hints)
-        + "\n\nFor more help: https://github.com/example/openvino-easy#installation"
-    )
-
-# Version compatibility check
 import warnings
 
 _RECOMMENDED_OV_VERSION = "2025.2"
-try:
-    _current_version = ov.__version__
-    # Parse version properly (e.g., "2025.2.0" -> ["2025", "2"])
-    version_parts = _current_version.split(".")
-    if len(version_parts) >= 2:
-        version_key = f"{version_parts[0]}.{version_parts[1]}"
-        if version_key not in ["2025.0", "2025.1", "2025.2"]:
-            warnings.warn(
-                f"OpenVINO {_RECOMMENDED_OV_VERSION} recommended, found {_current_version}. "
-                f"Some features may not work correctly. Consider upgrading:\n"
-                f"  pip install --upgrade 'openvino>={_RECOMMENDED_OV_VERSION},<2026.0'",
-                UserWarning,
-                stacklevel=2,
-            )
-except Exception:
-    # If version detection fails, continue silently
-    pass
+if _OV_AVAILABLE:
+    try:
+        _current_version = ov.__version__  # type: ignore[attr-defined]
+        version_parts = _current_version.split(".")
+        if len(version_parts) >= 2:
+            version_key = f"{version_parts[0]}.{version_parts[1]}"
+            if version_key not in ["2025.0", "2025.1", "2025.2"]:
+                warnings.warn(
+                    f"OpenVINO {_RECOMMENDED_OV_VERSION} recommended, found {_current_version}. "
+                    f"Some features may not work correctly. Consider upgrading:\n"
+                    f"  pip install --upgrade 'openvino>={_RECOMMENDED_OV_VERSION},<2026.0'",
+                    UserWarning,
+                    stacklevel=2,
+                )
+    except Exception:
+        pass
 
 from pathlib import Path
 from typing import Optional, List, Union, Dict, Any
 import logging
 import numpy as np
 import os
-from .loader import (
-    load_model,
-    ModelLoadError,
-    ModelNotFoundError,
-    ModelConversionError,
-    NetworkError,
-    UnsupportedModelError,
-    CorruptedModelError,
-)
-from .quant import quantize_model
-from .runtime import RuntimeWrapper
 from .benchmark import benchmark_pipeline
-from ._core import (
-    detect_device,
-    get_available_devices,
-    check_npu_driver,
-    get_npu_generation,
-    get_npu_capabilities,
-)
 
 __version__ = "1.0.0"
 
@@ -212,7 +176,9 @@ class Pipeline:
         self.model_path = model_path
         self.model_info = model_info or {}
 
-        # Initialize runtime wrapper with model info
+        # Initialize runtime wrapper with model info (imported lazily)
+        from .runtime import RuntimeWrapper
+
         self.runtime = RuntimeWrapper(compiled_model, device, model_info)
 
     def infer(self, input_data, **kwargs):
@@ -337,6 +303,14 @@ def load(
     if device_preference is None:
         device_preference = ["NPU", "GPU", "CPU"]
 
+    # Import heavy dependencies lazily
+    if not _OV_AVAILABLE:
+        _raise_openvino_missing()
+
+    from .loader import load_model
+    from .quant import quantize_model
+    from ._core import get_available_devices, check_npu_driver
+
     available_devices = get_available_devices()
     device = None
     attempted_devices = []
@@ -406,6 +380,7 @@ def load(
         )
 
     # Compile the model with enhanced error recovery
+    import openvino as ov  # Local import to ensure availability
     core = ov.Core()
     compile_config = {}
     compiled_model = None
@@ -593,13 +568,22 @@ def devices() -> List[str]:
     Returns:
         List of available device names
     """
-    return get_available_devices()
+    try:
+        from ._core import get_available_devices
+        return get_available_devices()
+    except Exception:
+        # If OpenVINO is not installed, return CPU as a minimal safe default
+        return ["CPU"]
 
 
 # For backward compatibility
 def detect_best_device() -> str:
     """Detect the best available device."""
-    return detect_device()
+    try:
+        from ._core import detect_device
+        return detect_device()
+    except Exception:
+        return "CPU"
 
 
 # Cache management namespaces
@@ -795,6 +779,7 @@ class _ModelsNamespace:
             models_dir = _get_models_dir(cache_dir)
 
             logging.info(f"Installing model: {model_id} ({dtype})")
+            from .loader import load_model
             model = load_model(model_id, dtype, str(models_dir))
 
             # Get size of installed model
@@ -1297,3 +1282,22 @@ class _CacheNamespace:
 # Create namespace instances
 models = _ModelsNamespace()
 cache = _CacheNamespace()
+
+
+def _raise_openvino_missing() -> None:
+    """Raise a helpful error when OpenVINO is missing at call time."""
+    install_variants = {
+        "cpu": "CPU-only (40MB)",
+        "runtime": "CPU runtime (40MB)",
+        "gpu": "Intel GPU support",
+        "npu": "Intel NPU support",
+        "quant": "With INT8 quantization",
+        "full": "Full dev environment (~1GB)",
+    }
+    lines = [
+        "OpenVINO runtime not found. Install OpenVINO-Easy with hardware-specific extras:",
+        *[f"  • {desc}: pip install 'openvino-easy[{variant}]'" for variant, desc in install_variants.items()],
+        "",
+        "For more help: https://github.com/example/openvino-easy#installation",
+    ]
+    raise ImportError("\n".join(lines))
