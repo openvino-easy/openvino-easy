@@ -330,7 +330,11 @@ def list_devices(args):
 
     core = ov.Core()
     all_devices = core.available_devices
-    validated_devices = get_available_devices()
+    try:
+        validated_devices = oe.devices()
+    except Exception as e:
+        print(f"Device detection failed: {e}")
+        return
 
     print("Device Status:")
     for device in all_devices:
