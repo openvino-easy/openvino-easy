@@ -1,0 +1,24 @@
+# Line length
+line-length = 120
+
+[lint]
+# Ignore common patterns in ML libraries
+ignore = [
+    "E722",  # bare-except (used for robust fallback behavior)
+    "F401",  # unused-import (used for optional dependency checking)
+    "E402",  # module-import-not-at-top-of-file (conditional imports)
+    "E501",  # line-too-long (handled by line-length setting)
+]
+
+# But still enforce critical errors
+select = [
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+    "W",     # pycodestyle warnings
+]
+
+# Allow these specific patterns
+[lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]  # Allow conditional imports in __init__
+"examples/*.py" = ["F401"]       # Allow unused imports in examples
+"tests/*.py" = ["F401"]          # Allow unused imports in tests

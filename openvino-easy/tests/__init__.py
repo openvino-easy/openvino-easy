@@ -1,1 +1,1 @@
-"""Test package for OpenVINO-Easy.""" 
+"""Test package for OpenVINO-Easy."""
