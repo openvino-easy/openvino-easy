@@ -276,6 +276,8 @@ def load(
     cache_dir: Optional[str] = None,
     retry_on_failure: bool = True,
     fallback_device: str = "CPU",
+    auto_install: bool = False,
+    offline: bool = False,
     **kwargs,
 ) -> "_ModuleContextManager":
     """
@@ -291,6 +293,8 @@ def load(
         device_preference: List of preferred devices (e.g., ["NPU", "GPU", "CPU"])
         dtype: Model precision ("fp16", "int8", "fp16-nf4")
         cache_dir: Directory for caching models
+        auto_install: Automatically install missing dependencies (default: False)
+        offline: Use only cached models, don't download (default: False)
         **kwargs: Additional loading parameters
 
     Note:
@@ -333,7 +337,7 @@ def load(
 
     # Load the model (use models directory)
     models_dir = _get_models_dir(cache_dir)
-    model = load_model(model_id_or_path, dtype, str(models_dir))
+    model = load_model(model_id_or_path, dtype, str(models_dir), auto_install=auto_install, offline=offline)
 
     # Create model info early for quantization
     model_info = {
@@ -780,7 +784,7 @@ class _ModelsNamespace:
 
             logging.info(f"Installing model: {model_id} ({dtype})")
             # Call module-level proxy so tests can patch `oe.load_model`
-            model = load_model(model_id, dtype, str(models_dir))
+            model = load_model(model_id, dtype, str(models_dir), auto_install=False)
 
             # Get size of installed model
             installed_models = self.list(cache_dir)
@@ -1312,3 +1316,17 @@ def load_model(*args, **kwargs):
     from .loader import load_model as _load_model
 
     return _load_model(*args, **kwargs)
+
+
+def validate_installation(verbose: bool = False) -> bool:
+    """
+    Validate OpenVINO-Easy installation and system compatibility.
+    
+    Args:
+        verbose: Show detailed validation report
+        
+    Returns:
+        True if installation is valid and compatible
+    """
+    from .install_validator import validate_installation as _validate
+    return _validate(verbose=verbose)

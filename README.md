@@ -13,31 +13,49 @@ stats = oe.benchmark()                              # JSON perf report
 
 ## 🎯 Installation
 
-**Pick the variant that matches your hardware:**
+**Choose by what you want to build:**
 
 ```bash
-# CPU-only (40MB wheel, fastest install)
-pip install "openvino-easy[cpu]"
-# or
-pip install "openvino-easy[runtime]"
+# Text models (GPT, BERT, ChatGPT-style) - Most Popular
+pip install "openvino-easy[text]"
 
-# Intel® Arc/Xe GPU support
-pip install "openvino-easy[gpu]"
+# Image generation (Stable Diffusion)
+pip install "openvino-easy[stable-diffusion]"
 
-# Intel® NPU support (Arrow Lake/Lunar Lake with FP16-NF4)
-pip install "openvino-easy[npu]"
-
-# With INT8 quantization support
-pip install "openvino-easy[quant]"
-
-# Audio model support (Whisper, TTS)
+# Audio models (Whisper, speech recognition)
 pip install "openvino-easy[audio]"
 
-# Full development environment (OpenVINO, NNCF, optimum ~1GB)
-pip install "openvino-easy[full]"
+# Command-line tools
+pip install "openvino-easy[cli]"
 
-# Everything (for development)
-pip install "openvino-easy[all]"
+# Combine multiple use cases
+pip install "openvino-easy[text,cli]"
+pip install "openvino-easy[stable-diffusion,audio]"
+```
+
+**Or by hardware optimization:**
+
+```bash
+# CPU-only (40MB, fastest install)
+pip install "openvino-easy[cpu]"
+
+# Intel® Arc/Xe GPU (requires Intel GPU drivers)
+pip install "openvino-easy[gpu]"
+
+# Intel® NPU (requires Intel NPU drivers + Arrow Lake/Lunar Lake)
+pip install "openvino-easy[npu]"
+
+# Everything for development
+pip install "openvino-easy[full]"
+```
+
+**Verify installation:**
+```bash
+# Check system compatibility
+oe doctor
+
+# List available devices
+oe devices
 ```
 
 ### 🩺 Installation Troubleshooting
