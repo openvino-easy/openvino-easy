@@ -55,7 +55,7 @@ jobs:
     
     - name: Test install from wheel
       run: |
-        pip install dist/*.whl
+        pip install dist/*.whl[cpu]
         python -c "import oe; print('Import successful')"
 
   publish-testpypi:

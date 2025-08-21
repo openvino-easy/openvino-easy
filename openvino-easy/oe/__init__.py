@@ -779,7 +779,7 @@ class _ModelsNamespace:
             models_dir = _get_models_dir(cache_dir)
 
             logging.info(f"Installing model: {model_id} ({dtype})")
-            from .loader import load_model
+            # Call module-level proxy so tests can patch `oe.load_model`
             model = load_model(model_id, dtype, str(models_dir))
 
             # Get size of installed model
