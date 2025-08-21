@@ -1301,3 +1301,14 @@ def _raise_openvino_missing() -> None:
         "For more help: https://github.com/example/openvino-easy#installation",
     ]
     raise ImportError("\n".join(lines))
+
+
+# Thin re-export to support tests that patch `oe.load_model`
+def load_model(*args, **kwargs):
+    """Lazy proxy to `oe.loader.load_model`.
+
+    Kept at module level so tests can patch `oe.load_model` without importing heavy deps.
+    """
+    from .loader import load_model as _load_model
+
+    return _load_model(*args, **kwargs)
