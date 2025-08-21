@@ -499,7 +499,7 @@ def benchmark_pipeline(
 
 def save_benchmark_results(
     results: Union[Dict[str, Any], BenchmarkResult],
-    output_path: str | Path,
+    output_path: Union[str, Path],
     format: str = "json",
 ):
     """
@@ -683,7 +683,7 @@ def _categorize_performance_vs_expected(actual: float, expected: float) -> str:
         return "poor"
 
 
-def load_benchmark_results(input_path: str | Path) -> Dict[str, Any]:
+def load_benchmark_results(input_path: Union[str, Path]) -> Dict[str, Any]:
     """
     Load benchmark results from a JSON file.
 

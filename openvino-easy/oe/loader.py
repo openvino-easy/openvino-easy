@@ -1,6 +1,7 @@
 """Model loader for OpenVINO-Easy (HF/ONNX/IR to ov.Model)."""
 
 from pathlib import Path
+from typing import Union
 import openvino as ov
 from huggingface_hub import snapshot_download
 import hashlib
@@ -548,7 +549,7 @@ def _convert_with_optimum_intel(model_path: str, output_dir: str, dtype: str = "
 
 
 def load_model(
-    model_id_or_path: str, dtype: str = "fp16", cache_dir: str | Path = "~/.cache/oe"
+    model_id_or_path: str, dtype: str = "fp16", cache_dir: Union[str, Path] = "~/.cache/oe"
 ):
     """
     Load a model from Hugging Face Hub, ONNX, or OpenVINO IR.
