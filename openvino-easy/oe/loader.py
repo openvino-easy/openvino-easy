@@ -98,7 +98,7 @@ def _download_with_retry(
             description = f"Downloading {repo_id}"
             if max_retries > 1:
                 description += f" (attempt {attempt + 1}/{max_retries})"
-            
+
             progress = ProgressIndicator(description, show_spinner=True)
             progress.start()
 
@@ -130,14 +130,14 @@ def _download_with_retry(
 
                 # Basic integrity check
                 if not any(local_path.iterdir()):
-                    progress.stop(success=False, message=f"Downloaded model directory is empty")
+                    progress.stop(success=False, message="Downloaded model directory is empty")
                     raise CorruptedModelError(
                         f"Downloaded model directory is empty: {local_path}"
                     )
 
                 progress.stop(success=True, message=f"Successfully downloaded {repo_id}")
                 return local_model_path
-            
+
             except Exception as e:
                 progress.stop(success=False, message=f"Download failed: {e}")
                 raise
@@ -201,7 +201,7 @@ def _check_dependencies_for_model_type(model_type: str, auto_install: bool = Fal
     type_mapping = {
         "transformers_optimum": "text",
         "transformers_vision": "text",
-        "transformers_multimodal": "text", 
+        "transformers_multimodal": "text",
         "transformers_audio": "text",
         "transformers_direct": "text",
         "pytorch_transformers": "text",
@@ -210,20 +210,20 @@ def _check_dependencies_for_model_type(model_type: str, auto_install: bool = Fal
         "onnx_text": "text",
         "onnx_vision": "vision",
     }
-    
+
     dep_category = type_mapping.get(model_type)
     if not dep_category:
         return  # No specific dependencies needed
-    
+
     validation_result = validate_model_dependencies(dep_category)
-    
+
     if not validation_result.get("all_satisfied", True):
         missing_packages = validation_result.get("missing_packages", [])
         pip_extras = validation_result.get("pip_extras")
-        
+
         if auto_install:
             install_result = auto_install_dependencies(
-                missing_packages, 
+                missing_packages,
                 use_pip_extras=pip_extras,
                 confirm=False
             )
@@ -638,7 +638,7 @@ def _convert_transformers_with_optimum(
         # Select appropriate OV model class with multiple fallback strategies
         conversion_attempts = []
         ov_model = None
-        
+
         # Strategy 1: Architecture-based selection
         try:
             if hasattr(config, "num_labels") and config.num_labels > 1:
@@ -673,7 +673,7 @@ def _convert_transformers_with_optimum(
                 )
         except Exception as e:
             conversion_attempts.append(f"Architecture-based conversion: {e}")
-            
+
             # Strategy 2: Try different model types as fallback
             for model_class, class_name in [
                 (OVModelForCausalLM, "CausalLM"),
@@ -692,7 +692,7 @@ def _convert_transformers_with_optimum(
                     break
                 except Exception as e2:
                     conversion_attempts.append(f"{class_name}: {e2}")
-            
+
             if ov_model is None:
                 raise ModelConversionError(
                     f"All conversion strategies failed for {model_id}:\n" +
@@ -710,12 +710,12 @@ def _convert_transformers_with_optimum(
         # Find the OpenVINO model file with better search
         model_files = []
         search_patterns = ["openvino_model.xml", "*.xml"]
-        
+
         for pattern in search_patterns:
             model_files = list(Path(output_dir).glob(pattern))
             if model_files:
                 break
-        
+
         # Also search in subdirectories
         if not model_files:
             model_files = list(Path(output_dir).rglob("*.xml"))
@@ -793,8 +793,8 @@ def _convert_with_optimum_intel(model_path: str, output_dir: str, dtype: str = "
 
 
 def load_model(
-    model_id_or_path: str, 
-    dtype: str = "fp16", 
+    model_id_or_path: str,
+    dtype: str = "fp16",
     cache_dir: Union[str, Path] = "~/.cache/oe",
     auto_install: bool = False,
     offline: bool = False
@@ -833,7 +833,7 @@ def load_model(
                 model = ov.Core().read_model(str(model_xml))
                 _verify_model_integrity(model, str(model_xml))
                 _safe_log_unicode(
-                    "info", 
+                    "info",
                     f"✅ Successfully loaded from cache: {model_id_or_path}",
                     f"[SUCCESS] Successfully loaded from cache: {model_id_or_path}"
                 )
@@ -855,14 +855,14 @@ def load_model(
                 xml_files = list(cached_dir.glob("**/*.xml"))
                 if xml_files:
                     possible_models.append(str(cached_dir))
-        
+
         error_msg = f"Model '{model_id_or_path}' not found in cache and offline mode is enabled.\n"
         if possible_models:
             error_msg += f"Found similar cached models: {possible_models[:3]}\n"
-        error_msg += f"\nTo use this model:\n"
+        error_msg += "\nTo use this model:\n"
         error_msg += f"1. Download it first: oe.models.install('{model_id_or_path}', dtype='{dtype}')\n"
         error_msg += f"2. Or disable offline mode: oe.load('{model_id_or_path}', offline=False)"
-        
+
         raise ModelNotFoundError(error_msg)
 
     # Download and convert Hugging Face model
@@ -902,7 +902,7 @@ def load_model(
         # Use Windows-safe temporary directory
         temp_base_dir = get_temp_dir()
         safe_makedirs(temp_base_dir)
-        
+
         with tempfile.TemporaryDirectory(dir=str(temp_base_dir)) as temp_dir:
             try:
                 if model_type == "diffusers":
@@ -924,7 +924,7 @@ def load_model(
                     # Use optimum-intel for known compatible transformers models
                     conv_progress = ConversionProgress(model_type, f"Converting {model_type} model with optimum-intel")
                     conv_progress.start(["Loading model", "Converting to OpenVINO", "Optimizing"])
-                    
+
                     try:
                         conv_progress.next_step("Loading model configuration")
                         conv_progress.next_step("Converting to OpenVINO format")
@@ -937,11 +937,11 @@ def load_model(
                         )
                         conv_progress.next_step("Loading converted model")
                         model = ov.Core().read_model(model_xml_path)
-                        
+
                         # Get model info for progress
                         model_info = {"inputs": len(model.inputs), "outputs": len(model.outputs)}
                         conv_progress.complete(success=True, output_info=model_info)
-                    except Exception as e:
+                    except Exception:
                         conv_progress.complete(success=False)
                         raise
 
@@ -949,17 +949,17 @@ def load_model(
                     # Direct loading for ONNX models
                     conv_progress = ConversionProgress(model_type, f"Loading {model_type} model")
                     conv_progress.start(["Reading ONNX model", "Converting to OpenVINO"])
-                    
+
                     try:
                         conv_progress.next_step("Reading ONNX model file")
                         model = _safe_model_conversion(
                             _convert_with_direct_ov, str(local_path), "onnx", dtype
                         )
                         conv_progress.next_step("Conversion complete")
-                        
+
                         model_info = {"inputs": len(model.inputs), "outputs": len(model.outputs)}
                         conv_progress.complete(success=True, output_info=model_info)
-                    except Exception as e:
+                    except Exception:
                         conv_progress.complete(success=False)
                         raise
 

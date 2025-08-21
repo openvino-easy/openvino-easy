@@ -38,13 +38,13 @@ def is_windows() -> bool:
 def normalize_path(path: Union[str, Path]) -> Path:
     """Normalize path for cross-platform compatibility."""
     path_obj = Path(path)
-    
+
     if is_windows():
         # Handle Windows-specific path issues
-        
+
         # Convert forward slashes to backslashes
         str_path = str(path_obj).replace("/", "\\")
-        
+
         # Handle long path limitation on Windows
         if len(str_path) > 260:
             # Try to use the UNC path prefix for long paths
@@ -55,20 +55,20 @@ def normalize_path(path: Union[str, Path]) -> Path:
                 else:
                     # Local path
                     str_path = "\\\\?\\" + str_path
-        
+
         path_obj = Path(str_path)
-    
+
     return path_obj.resolve()
 
 
 def safe_rmtree(path: Union[str, Path]) -> bool:
     """Safely remove directory tree with Windows-specific handling."""
     import shutil
-    
+
     path_obj = Path(path)
     if not path_obj.exists():
         return True
-    
+
     try:
         if is_windows():
             # On Windows, handle read-only files and long paths
@@ -77,11 +77,11 @@ def safe_rmtree(path: Union[str, Path]) -> bool:
                 if os.path.exists(path):
                     os.chmod(path, stat.S_IWRITE)
                     func(path)
-            
+
             shutil.rmtree(str(path_obj), onerror=handle_remove_readonly)
         else:
             shutil.rmtree(str(path_obj))
-        
+
         return True
     except Exception as e:
         _safe_log_unicode(
@@ -95,7 +95,7 @@ def safe_rmtree(path: Union[str, Path]) -> bool:
 def safe_makedirs(path: Union[str, Path], exist_ok: bool = True) -> bool:
     """Safely create directories with Windows-specific handling."""
     path_obj = normalize_path(path)
-    
+
     try:
         path_obj.mkdir(parents=True, exist_ok=exist_ok)
         return True
@@ -124,7 +124,7 @@ def check_path_length(path: Union[str, Path]) -> bool:
     """Check if path length is problematic on Windows."""
     if not is_windows():
         return True
-    
+
     path_str = str(path)
     if len(path_str) > 260:
         _safe_log_unicode(
@@ -133,7 +133,7 @@ def check_path_length(path: Union[str, Path]) -> bool:
             f"[WARNING] Path may be too long for Windows: {len(path_str)} characters"
         )
         return False
-    
+
     return True
 
 
@@ -141,9 +141,9 @@ def fix_windows_permissions(path: Union[str, Path]) -> bool:
     """Fix Windows file permissions issues."""
     if not is_windows():
         return True
-    
+
     path_obj = Path(path)
-    
+
     try:
         if path_obj.exists():
             # Make sure we can read/write the path
@@ -179,7 +179,7 @@ def handle_symlink_warning():
             )
             allow_development, _ = winreg.QueryValueEx(key, "AllowDevelopmentWithoutDevLicense")
             winreg.CloseKey(key)
-            
+
             if not allow_development:
                 _safe_log_unicode(
                     "warning",
@@ -195,30 +195,30 @@ def handle_symlink_warning():
                 "[INFO] For best experience on Windows, enable Developer Mode in Settings"
             )
             return False
-    
+
     return True
 
 
 def safe_copy_file(src: Union[str, Path], dst: Union[str, Path]) -> bool:
     """Safely copy file with Windows-specific handling."""
     import shutil
-    
+
     src_path = normalize_path(src)
     dst_path = normalize_path(dst)
-    
+
     # Ensure destination directory exists
     dst_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     try:
         if is_windows():
             # On Windows, handle long paths and permissions
             fix_windows_permissions(src_path)
-            
+
         shutil.copy2(str(src_path), str(dst_path))
-        
+
         if is_windows():
             fix_windows_permissions(dst_path)
-        
+
         return True
     except Exception as e:
         _safe_log_unicode(
@@ -243,15 +243,15 @@ def get_safe_cache_dir(base_dir: Optional[Union[str, Path]] = None) -> Path:
                 cache_path = Path.home() / "AppData" / "Local" / "openvino-easy"
         else:
             cache_path = Path.home() / ".cache" / "openvino-easy"
-    
+
     # Ensure path length is reasonable
     if is_windows() and len(str(cache_path)) > 200:
         # Use a shorter path
         cache_path = Path("C:/oe_cache") if Path("C:/").exists() else get_temp_dir()
-    
+
     # Create the directory
     safe_makedirs(cache_path)
-    
+
     return cache_path
 
 
@@ -263,20 +263,20 @@ def check_windows_compatibility() -> dict:
         "issues": [],
         "recommendations": [],
     }
-    
+
     if not is_windows():
         status["compatible"] = True
         return status
-    
+
     # Check Python version
     if sys.version_info < (3, 8):
         status["issues"].append(f"Python {sys.version_info.major}.{sys.version_info.minor} may have issues on Windows")
         status["recommendations"].append("Upgrade to Python 3.8+")
-    
+
     # Check Developer Mode
     if not handle_symlink_warning():
         status["recommendations"].append("Enable Developer Mode in Windows Settings for better compatibility")
-    
+
     # Check available disk space
     try:
         import shutil
@@ -288,13 +288,13 @@ def check_windows_compatibility() -> dict:
             status["recommendations"].append("Free up at least 5GB of disk space")
     except Exception as e:
         status["issues"].append(f"Could not check disk space: {e}")
-    
+
     # Check path length support
     test_long_path = "C:/" + "a" * 250 + "/test"
     if not check_path_length(test_long_path):
         status["issues"].append("Long path names may cause issues")
         status["recommendations"].append("Use shorter cache directory paths")
-    
+
     status["compatible"] = len(status["issues"]) == 0
-    
+
     return status

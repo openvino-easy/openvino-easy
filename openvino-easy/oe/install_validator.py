@@ -8,8 +8,8 @@ from typing import Dict, List, Any, Optional
 from pathlib import Path
 
 from .dep_validator import (
-    validate_core_dependencies, 
-    validate_system_requirements, 
+    validate_core_dependencies,
+    validate_system_requirements,
     comprehensive_dependency_check
 )
 from .windows_compat import check_windows_compatibility, get_safe_cache_dir
@@ -57,19 +57,19 @@ def check_python_environment() -> Dict[str, Any]:
             "recommendations": [],
         },
     }
-    
+
     # Python version check
     if not env_check["python_version"]["supported"]:
         env_check["python_version"]["issues"].append(
             f"Python {env_check['python_version']['version']} is not supported (minimum: 3.8)"
         )
         env_check["python_version"]["recommendations"].append("Upgrade to Python 3.8 or newer")
-    
+
     # Virtual environment check
     if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
         env_check["virtual_env"]["active"] = True
         env_check["virtual_env"]["path"] = sys.prefix
-        
+
         # Detect virtual environment type
         if "conda" in sys.prefix.lower() or "anaconda" in sys.prefix.lower():
             env_check["virtual_env"]["type"] = "conda"
@@ -82,10 +82,10 @@ def check_python_environment() -> Dict[str, Any]:
         env_check["virtual_env"]["recommendations"].append(
             "Consider using a virtual environment to avoid package conflicts"
         )
-    
+
     # Pip version check
     try:
-        result = subprocess.run([sys.executable, "-m", "pip", "--version"], 
+        result = subprocess.run([sys.executable, "-m", "pip", "--version"],
                               capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             pip_version = result.stdout.strip().split()[1]
@@ -96,7 +96,7 @@ def check_python_environment() -> Dict[str, Any]:
     except Exception as e:
         env_check["pip_version"]["issues"].append(f"Could not check pip version: {e}")
         env_check["pip_version"]["recommendations"].append("Ensure pip is properly installed")
-    
+
     return env_check
 
 
@@ -125,67 +125,67 @@ def check_hardware_requirements() -> Dict[str, Any]:
             "recommendations": [],
         },
     }
-    
+
     # Memory check
     try:
         import psutil
         memory = psutil.virtual_memory()
         hw_check["memory"]["total_gb"] = round(memory.total / (1024**3), 1)
         hw_check["memory"]["available_gb"] = round(memory.available / (1024**3), 1)
-        
+
         if hw_check["memory"]["total_gb"] < 4:
             hw_check["memory"]["issues"].append(f"Low system memory: {hw_check['memory']['total_gb']}GB")
             hw_check["memory"]["recommendations"].append("Recommend at least 8GB RAM for optimal performance")
         elif hw_check["memory"]["total_gb"] < 8:
             hw_check["memory"]["recommendations"].append("Consider upgrading to 16GB+ RAM for large models")
-        
+
         hw_check["memory"]["sufficient"] = hw_check["memory"]["total_gb"] >= 4
-        
+
     except ImportError:
         hw_check["memory"]["issues"].append("Could not check memory (psutil not available)")
         hw_check["memory"]["recommendations"].append("Install psutil: pip install psutil")
     except Exception as e:
         hw_check["memory"]["issues"].append(f"Memory check failed: {e}")
-    
+
     # Storage check
     try:
         cache_dir = get_safe_cache_dir()
         hw_check["storage"]["cache_dir"] = str(cache_dir)
-        
+
         import shutil
         total, used, free = shutil.disk_usage(str(cache_dir))
         hw_check["storage"]["free_gb"] = round(free / (1024**3), 1)
-        
+
         if hw_check["storage"]["free_gb"] < 5:
             hw_check["storage"]["issues"].append(f"Low disk space: {hw_check['storage']['free_gb']}GB available")
             hw_check["storage"]["recommendations"].append("Free up at least 10GB of disk space")
         elif hw_check["storage"]["free_gb"] < 10:
             hw_check["storage"]["recommendations"].append("Consider freeing up more space for large models")
-        
+
         hw_check["storage"]["sufficient"] = hw_check["storage"]["free_gb"] >= 5
-        
+
     except Exception as e:
         hw_check["storage"]["issues"].append(f"Storage check failed: {e}")
-    
+
     # CPU check
     try:
         import multiprocessing
         hw_check["cpu"]["cores"] = multiprocessing.cpu_count()
-        
+
         if hw_check["cpu"]["cores"] < 2:
             hw_check["cpu"]["issues"].append(f"Low CPU cores: {hw_check['cpu']['cores']}")
             hw_check["cpu"]["recommendations"].append("Multi-core CPU recommended for better performance")
-        
+
         # Check architecture support
         arch = platform.machine().lower()
         if arch not in ["x86_64", "amd64", "aarch64", "arm64"]:
             hw_check["cpu"]["supported"] = False
             hw_check["cpu"]["issues"].append(f"Unsupported architecture: {arch}")
             hw_check["cpu"]["recommendations"].append("x86_64 or ARM64 architecture required")
-            
+
     except Exception as e:
         hw_check["cpu"]["issues"].append(f"CPU check failed: {e}")
-    
+
     return hw_check
 
 
@@ -206,13 +206,13 @@ def check_openvino_compatibility() -> Dict[str, Any]:
             "recommendations": [],
         },
     }
-    
+
     # OpenVINO runtime check
     try:
         import openvino as ov
         ov_check["runtime"]["installed"] = True
         ov_check["runtime"]["version"] = ov.__version__
-        
+
         # Check version compatibility
         version_parts = ov.__version__.split(".")
         if len(version_parts) >= 2:
@@ -226,13 +226,13 @@ def check_openvino_compatibility() -> Dict[str, Any]:
                 ov_check["runtime"]["recommendations"].append(
                     "Upgrade to OpenVINO 2024.3+ or 2025.x"
                 )
-        
+
         # Check available devices
         try:
             core = ov.Core()
             available_devices = core.available_devices
             ov_check["devices"]["available"] = available_devices
-            
+
             # Prioritize devices
             if "NPU" in available_devices:
                 ov_check["devices"]["recommended"].append("NPU")
@@ -240,16 +240,16 @@ def check_openvino_compatibility() -> Dict[str, Any]:
                 ov_check["devices"]["recommended"].append("GPU")
             if "CPU" in available_devices:
                 ov_check["devices"]["recommended"].append("CPU")
-            
+
             if not ov_check["devices"]["recommended"]:
                 ov_check["devices"]["issues"].append("No recommended devices available")
                 ov_check["devices"]["recommendations"].append(
                     "Ensure proper OpenVINO installation with device support"
                 )
-                
+
         except Exception as e:
             ov_check["devices"]["issues"].append(f"Device detection failed: {e}")
-            
+
     except ImportError:
         ov_check["runtime"]["issues"].append("OpenVINO runtime not installed")
         ov_check["runtime"]["recommendations"].append(
@@ -257,7 +257,7 @@ def check_openvino_compatibility() -> Dict[str, Any]:
         )
     except Exception as e:
         ov_check["runtime"]["issues"].append(f"OpenVINO check failed: {e}")
-    
+
     return ov_check
 
 
@@ -282,34 +282,34 @@ def run_comprehensive_validation() -> Dict[str, Any]:
             "recommendations": [],
         },
     }
-    
+
     # Windows-specific checks
     if sys.platform == "win32":
         validation_results["windows_compat"] = check_windows_compatibility()
-    
+
     # Aggregate issues
     critical_issues = []
     warnings = []
     recommendations = []
-    
+
     # Check each component
     for component_name, component_data in validation_results.items():
         if component_name in ["timestamp", "platform", "overall"]:
             continue
-            
+
         if isinstance(component_data, dict):
             _extract_issues_recursive(component_data, critical_issues, warnings, recommendations)
-    
+
     # Determine overall compatibility
     validation_results["overall"]["compatible"] = len(critical_issues) == 0
     validation_results["overall"]["critical_issues"] = critical_issues
     validation_results["overall"]["warnings"] = warnings
     validation_results["overall"]["recommendations"] = recommendations
-    
+
     return validation_results
 
 
-def _extract_issues_recursive(data: Dict[str, Any], critical_issues: List[str], 
+def _extract_issues_recursive(data: Dict[str, Any], critical_issues: List[str],
                             warnings: List[str], recommendations: List[str]):
     """Recursively extract issues from nested dictionaries."""
     for key, value in data.items():
@@ -325,13 +325,13 @@ def _extract_issues_recursive(data: Dict[str, Any], critical_issues: List[str],
 
 def print_validation_report(results: Dict[str, Any], verbose: bool = False):
     """Print formatted validation report."""
-    
+
     def print_status(status: bool, good_msg: str, bad_msg: str):
         if status:
             _safe_log_unicode("info", f"✅ {good_msg}", f"[OK] {good_msg}")
         else:
             _safe_log_unicode("error", f"❌ {bad_msg}", f"[FAIL] {bad_msg}")
-    
+
     # Header
     _safe_log_unicode(
         "info",
@@ -339,7 +339,7 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
         "[VALIDATION] OpenVINO-Easy Installation Validation Report"
     )
     print("=" * 60)
-    
+
     # Overall status
     overall = results["overall"]
     print_status(
@@ -347,7 +347,7 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
         "System is compatible with OpenVINO-Easy",
         "System has compatibility issues"
     )
-    
+
     # Python environment
     python_env = results["python_env"]
     print_status(
@@ -355,7 +355,7 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
         f"Python {python_env['python_version']['version']} is supported",
         f"Python {python_env['python_version']['version']} is not supported"
     )
-    
+
     # OpenVINO runtime
     ov_check = results["openvino"]
     if ov_check["runtime"]["installed"]:
@@ -366,7 +366,7 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
         )
     else:
         print_status(False, "", "OpenVINO runtime not installed")
-    
+
     # Hardware
     hw_check = results["hardware"]
     print_status(
@@ -374,13 +374,13 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
         f"Memory: {hw_check['memory']['total_gb']}GB available",
         f"Memory: {hw_check['memory']['total_gb']}GB (insufficient)"
     )
-    
+
     print_status(
         hw_check["storage"]["sufficient"],
         f"Storage: {hw_check['storage']['free_gb']}GB free",
         f"Storage: {hw_check['storage']['free_gb']}GB free (insufficient)"
     )
-    
+
     # Critical issues
     if overall["critical_issues"]:
         _safe_log_unicode(
@@ -390,7 +390,7 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
         )
         for issue in overall["critical_issues"]:
             print(f"  • {issue}")
-    
+
     # Recommendations
     if overall["recommendations"]:
         _safe_log_unicode(
@@ -400,7 +400,7 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
         )
         for rec in overall["recommendations"][:5]:  # Show top 5
             print(f"  • {rec}")
-    
+
     # Verbose details
     if verbose:
         print("\n" + "=" * 60)
@@ -409,10 +409,10 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
             "📋 Detailed Report:",
             "[DETAILS] Detailed Report:"
         )
-        
+
         if ov_check["devices"]["available"]:
             print(f"Available devices: {', '.join(ov_check['devices']['available'])}")
-        
+
         if results.get("windows_compat"):
             win_compat = results["windows_compat"]
             print(f"Windows compatibility: {'✅' if win_compat['compatible'] else '❌'}")
@@ -421,14 +421,14 @@ def print_validation_report(results: Dict[str, Any], verbose: bool = False):
 def validate_installation(verbose: bool = False) -> bool:
     """
     Validate OpenVINO-Easy installation and system compatibility.
-    
+
     Args:
         verbose: Show detailed validation report
-        
+
     Returns:
         True if installation is valid and compatible
     """
     results = run_comprehensive_validation()
     print_validation_report(results, verbose=verbose)
-    
+
     return results["overall"]["compatible"]

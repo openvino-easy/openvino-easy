@@ -46,7 +46,7 @@ def _validate_cache_path(original_path) -> None:
     try:
         # Convert to string if it's a Path object
         path_str = str(original_path)
-        
+
         # Check original path string for dangerous patterns before resolution
         dangerous_patterns = ["..", "~/", "${", "`", "%", "$("]
         for pattern in dangerous_patterns:
@@ -1321,10 +1321,10 @@ def load_model(*args, **kwargs):
 def validate_installation(verbose: bool = False) -> bool:
     """
     Validate OpenVINO-Easy installation and system compatibility.
-    
+
     Args:
         verbose: Show detailed validation report
-        
+
     Returns:
         True if installation is valid and compatible
     """
