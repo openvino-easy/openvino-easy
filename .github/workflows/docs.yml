@@ -59,8 +59,8 @@ jobs:
         run: |
           # Install minimal dependencies needed for API documentation
           pip install numpy>=1.21.0 huggingface-hub>=0.23.0 tqdm>=4.64.0
-          # Install the project in development mode
-          pip install -e ./openvino-easy/
+          # Just add to Python path instead of installing
+          echo "PYTHONPATH=$PYTHONPATH:$(pwd)/openvino-easy" >> $GITHUB_ENV
           
       - name: Create Sphinx configuration
         run: |
