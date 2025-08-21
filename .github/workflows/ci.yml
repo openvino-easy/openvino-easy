@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd openvino-easy
+        pip install -e .[dev]
+    
+    - name: Run tests
+      run: |
+        cd openvino-easy
+        python -m pytest tests/ -v --tb=short
+    
+    - name: Upload coverage
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v3
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff black isort
+    
+    - name: Lint with ruff
+      run: |
+        cd openvino-easy
+        ruff check .
+    
+    - name: Check formatting
+      run: |
+        cd openvino-easy
+        black --check .
+        isort --check-only .
+
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd openvino-easy
+        pip install -e .[dev]
+        pip install mypy
+    
+    - name: Type check
+      run: |
+        cd openvino-easy
+        mypy oe/
