@@ -60,7 +60,7 @@ def test_load_local_onnx_model(mock_normalize_path, mock_core):
     assert result == mock_model
 
 
-@patch("oe.loader._check_dependencies_for_model_type") 
+@patch("oe.loader._check_dependencies_for_model_type")
 @patch("oe.loader._detect_model_type")
 @patch("oe.loader._download_with_retry")
 @patch("oe.loader.ov.Core")
@@ -68,13 +68,13 @@ def test_load_hf_model_new(mock_core, mock_download, mock_detect_type, mock_chec
     """Test loading a new Hugging Face model."""
     # Mock download returning a model path
     mock_download.return_value = "/tmp/downloaded/model"
-    
+
     # Mock model type detection
     mock_detect_type.return_value = "transformers_optimum"
-    
+
     # Mock dependency check to pass
     mock_check_deps.return_value = None
-    
+
     # Mock model loading
     mock_model = MagicMock()
     mock_model.inputs = [MagicMock()]  # Mock having at least one input
@@ -84,8 +84,8 @@ def test_load_hf_model_new(mock_core, mock_download, mock_detect_type, mock_chec
     # Mock offline mode and no cached model
     with patch("oe.loader.ov.__version__", "2025.2.0"):
         with patch("oe.loader._convert_transformers_with_optimum") as mock_convert:
-            with patch("oe.loader.ov.save_model") as mock_save:
-                mock_convert.return_value = "/tmp/converted/model.xml" 
+            with patch("oe.loader.ov.save_model"):
+                mock_convert.return_value = "/tmp/converted/model.xml"
                 result = load_model("test-model", offline=False)
 
     # Verify dependencies were checked
@@ -96,7 +96,7 @@ def test_load_hf_model_new(mock_core, mock_download, mock_detect_type, mock_chec
     assert result == mock_model
 
 
-@patch("oe.loader.ov.Core")  
+@patch("oe.loader.ov.Core")
 @patch("oe.loader.normalize_path")
 def test_load_hf_model_cached(mock_normalize_path, mock_core):
     """Test loading a cached Hugging Face model."""
@@ -109,7 +109,7 @@ def test_load_hf_model_cached(mock_normalize_path, mock_core):
     # Mock cache directory setup
     cache_dir = MagicMock()
     mock_normalize_path.return_value = cache_dir
-    
+
     # Mock cache path exists
     cache_path = MagicMock()
     cache_path.exists.return_value = True  # Cache exists
@@ -118,7 +118,7 @@ def test_load_hf_model_cached(mock_normalize_path, mock_core):
     model_xml.__str__ = lambda self: "/cache/model.xml"
     cache_path.__truediv__.return_value = model_xml
     cache_dir.__truediv__.return_value = cache_path
-    
+
     with patch("oe.loader.ov.__version__", "2025.2.0"):
         result = load_model("test-model")
 

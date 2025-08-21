@@ -811,10 +811,10 @@ def load_model(
         model_id_or_path.endswith(('.xml', '.onnx', '.bin')) or
         ('\\' in model_id_or_path and ':' in model_id_or_path)  # Windows absolute paths like C:\
     )
-    
+
     if is_likely_local_path:
         model_path = normalize_path(model_id_or_path)
-        
+
         # Check if it's a local IR model
         if model_path.exists() and model_path.suffix == ".xml":
             return ov.Core().read_model(str(model_path))
@@ -822,11 +822,11 @@ def load_model(
         # Check if it's a local ONNX model
         if model_path.exists() and model_path.suffix == ".onnx":
             return ov.Core().read_model(str(model_path))
-            
+
         # Local path specified but file doesn't exist
         if not model_path.exists():
             raise ModelNotFoundError(f"Local model file not found: {model_path}")
-    
+
     # At this point, treat as HuggingFace model ID
 
     # Assume it's a Hugging Face model ID
