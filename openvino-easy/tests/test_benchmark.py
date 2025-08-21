@@ -12,6 +12,8 @@ from oe.benchmark import (
     load_benchmark_results,
     compare_benchmarks,
 )
+import importlib
+benchmark_module = importlib.import_module('oe.benchmark')
 
 
 def test_generate_dummy_input():
@@ -69,7 +71,7 @@ def test_calculate_percentiles():
     assert abs(percentiles["p90_ms"] - 9.1) < 0.1
 
 
-@patch("oe.benchmark._generate_dummy_input")
+@patch.object(benchmark_module, '_generate_dummy_input')
 @patch("time.perf_counter_ns")
 def test_benchmark_model(mock_time, mock_generate_input):
     """Test model benchmarking."""
@@ -192,7 +194,7 @@ def test_compare_benchmarks_single():
     assert "relative_fps" not in comparison  # Should not be present for single result
 
 
-@patch("oe.benchmark._generate_dummy_input")
+@patch.object(benchmark_module, '_generate_dummy_input')
 @patch("time.perf_counter_ns")
 def test_benchmark_model_fps_calculation(mock_time, mock_generate_input):
     """Test FPS calculation in benchmarking."""
@@ -212,7 +214,7 @@ def test_benchmark_model_fps_calculation(mock_time, mock_generate_input):
     assert results["fps"] == 100.0
 
 
-@patch("oe.benchmark._generate_dummy_input")
+@patch.object(benchmark_module, '_generate_dummy_input')
 @patch("time.perf_counter_ns")
 def test_benchmark_model_zero_latency(mock_time, mock_generate_input):
     """Test FPS calculation with zero latency."""

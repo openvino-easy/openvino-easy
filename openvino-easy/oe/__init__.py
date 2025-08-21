@@ -77,19 +77,22 @@ __version__ = "1.0.0"
 _current_pipeline = None
 
 
-def _validate_cache_path(original_path: str) -> None:
+def _validate_cache_path(original_path) -> None:
     """Validate that cache path is safe and doesn't escape expected boundaries."""
     try:
+        # Convert to string if it's a Path object
+        path_str = str(original_path)
+        
         # Check original path string for dangerous patterns before resolution
         dangerous_patterns = ["..", "~/", "${", "`", "%", "$("]
         for pattern in dangerous_patterns:
-            if pattern in str(original_path):
+            if pattern in path_str:
                 raise ValueError(
                     f"Unsafe path pattern '{pattern}' detected in: {original_path}"
                 )
 
         # Additional checks for common attack patterns
-        if original_path.startswith("/"):
+        if path_str.startswith("/"):
             # Unix absolute paths - check for system directories
             forbidden_starts = [
                 "/bin",
@@ -102,14 +105,14 @@ def _validate_cache_path(original_path: str) -> None:
                 "/dev",
             ]
             for forbidden in forbidden_starts:
-                if original_path.startswith(forbidden):
+                if path_str.startswith(forbidden):
                     raise ValueError(
                         f"Cannot use system directory as cache: {original_path}"
                     )
 
-        elif len(original_path) > 1 and original_path[1] == ":":
+        elif len(path_str) > 1 and path_str[1] == ":":
             # Windows absolute paths - check for system drives/directories
-            if original_path.upper().startswith(
+            if path_str.upper().startswith(
                 ("C:\\WINDOWS", "C:\\PROGRAM", "C:\\SYSTEM")
             ):
                 raise ValueError(
