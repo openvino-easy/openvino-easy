@@ -326,24 +326,15 @@ def list_devices(args):
     print()
 
     # Get all devices (including potentially non-functional ones)
-    import openvino as ov
-
-    core = ov.Core()
-    all_devices = core.available_devices
     try:
-        validated_devices = oe.devices()
+        all_devices = oe.devices()
     except Exception as e:
         print(f"Device detection failed: {e}")
         return
 
     print("Device Status:")
     for device in all_devices:
-        status = (
-            "[OK] Functional"
-            if device in validated_devices
-            else "[FAIL] Not functional"
-        )
-        print(f"  {device}: {status}")
+        print(f"  {device}: [OK] Functional")
 
         # Special handling for NPU
         if device == "NPU":
@@ -356,7 +347,8 @@ def list_devices(args):
                     print(f"    └─ Fix: {npu_status['recommendations'][0]}")
 
     print()
-    print(f"[OK] {len(validated_devices)} functional device(s) detected")
+    # In this simplified listing, consider all reported devices as functional
+    print(f"[OK] {len(all_devices)} functional device(s) detected")
 
     # Show recommended device
     best_device = oe.detect_best_device()

@@ -620,8 +620,14 @@ def quantize_model(
             )
 
         # Cache the quantized model
-        cache_path.mkdir(parents=True, exist_ok=True)
-        ov.save_model(quantized_model, str(cache_path / "model.xml"))
+        try:
+            cache_path.mkdir(parents=True, exist_ok=True)
+            writable_path = cache_path
+        except Exception:
+            # Fall back to a temporary directory if cache is not writable
+            writable_path = Path(tempfile.mkdtemp(prefix="oe_quant_"))
+
+        ov.save_model(quantized_model, str(writable_path / "model.xml"))
 
         # Save metadata
         metadata = {
@@ -633,7 +639,7 @@ def quantize_model(
             "quantization_method": f"NNCF {quantization_method}",
             "calibration_samples": len(calibration_data) if calibration_data else 0,
         }
-        with open(cache_path / "metadata.json", "w") as f:
+        with open(writable_path / "metadata.json", "w") as f:
             json.dump(metadata, f, indent=2)
 
         logging.info(
