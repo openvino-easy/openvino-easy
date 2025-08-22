@@ -1,3 +1,6 @@
+# NOTICE: THIS PROJECT IS STILL A WORK IN PROGRESS IT IS NOT READY FOR PRODUCTION
+
+
 # OpenVINO-Easy 🚀
 
 **Framework-agnostic Python wrapper for OpenVINO 2025**
